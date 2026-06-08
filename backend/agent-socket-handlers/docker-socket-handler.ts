@@ -3,6 +3,7 @@ import { DockgeServer } from "../dockge-server";
 import { callbackError, callbackResult, checkLogin, DockgeSocket, ValidationError } from "../util-server";
 import { Stack } from "../stack";
 import { AgentSocket } from "../../common/agent-socket";
+import checkImageUpdates from "../check-image-updates";
 
 export class DockerSocketHandler extends AgentSocketHandler {
     create(socket : DockgeSocket, server : DockgeServer, agentSocket : AgentSocket) {
@@ -105,6 +106,22 @@ export class DockerSocketHandler extends AgentSocketHandler {
             }
         });
 
+        // checkImageUpdates
+        agentSocket.on("checkImageUpdates", async (force: unknown, callback) => {
+            try {
+                checkLogin(socket);
+                await checkImageUpdates.check(server, force === true);
+                server.sendImageUpdateList();
+                callbackResult({
+                    ok: true,
+                    lastChecked: checkImageUpdates.getLastCheckTime(),
+                    checking: checkImageUpdates.isChecking(),
+                }, callback);
+            } catch (e) {
+                callbackError(e, callback);
+            }
+        });
+
         // startStack
         agentSocket.on("startStack", async (stackName : unknown, callback) => {
             try {
@@ -187,12 +204,14 @@ export class DockerSocketHandler extends AgentSocketHandler {
 
                 const stack = await Stack.getStack(server, stackName);
                 await stack.update(socket);
+                checkImageUpdates.invalidateStack(stackName);
                 callbackResult({
                     ok: true,
                     msg: "Updated",
                     msgi18n: true,
                 }, callback);
                 server.sendStackList();
+                server.sendImageUpdateList();
             } catch (e) {
                 callbackError(e, callback);
             }

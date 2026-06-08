@@ -167,6 +167,15 @@ export default {
 
             result.sort((m1, m2) => {
 
+                // sort by image updates available
+                const m1Updateable = this.$root.isStackUpdateable(m1);
+                const m2Updateable = this.$root.isStackUpdateable(m2);
+                if (m1Updateable && !m2Updateable) {
+                    return -1;
+                } else if (!m1Updateable && m2Updateable) {
+                    return 1;
+                }
+
                 // sort by managed by dockge
                 if (m1.isManagedByDockge && !m2.isManagedByDockge) {
                     return -1;

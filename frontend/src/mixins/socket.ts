@@ -33,6 +33,12 @@ export default defineComponent({
 
             stackList: {},
 
+            // Image update status per endpoint -> stack name
+            imageUpdateList: {} as Record<string, Record<string, { updateable: boolean }>>,
+
+            imageUpdateLastChecked: 0,
+            imageUpdateChecking: false,
+
             // All stack list from all agents
             allAgentStackList: {} as Record<string, object>,
 
@@ -264,6 +270,15 @@ export default defineComponent({
                 }
             });
 
+            agentSocket.on("imageUpdateList", (res) => {
+                if (res.ok) {
+                    const endpoint = res.endpoint || "";
+                    this.imageUpdateList[endpoint] = res.imageUpdateList;
+                    this.imageUpdateLastChecked = res.lastChecked || 0;
+                    this.imageUpdateChecking = res.checking || false;
+                }
+            });
+
             socket.on("stackStatusList", (res) => {
                 if (res.ok) {
                     for (let stackName in res.stackStatusList) {
@@ -308,6 +323,20 @@ export default defineComponent({
 
         emitAgent(endpoint : string, eventName : string, ...args : unknown[]) {
             this.getSocket().emit("agent", endpoint, eventName, ...args);
+        },
+
+        isStackUpdateable(stack : { name: string, endpoint?: string }) {
+            const endpoint = stack.endpoint || "";
+            const info = this.imageUpdateList[endpoint]?.[stack.name];
+            return info?.updateable === true;
+        },
+
+        checkImageUpdates(force = false) {
+            this.emitAgent("", "checkImageUpdates", force, () => {});
+
+            for (const endpoint in this.allAgentStackList) {
+                this.emitAgent(endpoint, "checkImageUpdates", force, () => {});
+            }
         },
 
         /**
