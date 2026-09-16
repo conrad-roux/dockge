@@ -114,6 +114,14 @@ class CheckImageUpdates {
                 }
             }
 
+            // Setting may have been disabled while this check was running.
+            // Do not restore results if the feature is now off.
+            if (await Settings.get("checkImageUpdates") === false) {
+                this.results = new Map();
+                this.lastCheckTime = 0;
+                return this.results;
+            }
+
             this.results = newResults;
             this.lastCheckTime = Date.now();
         } finally {
