@@ -5,6 +5,7 @@ import { log } from "./log";
 import { DockgeServer } from "./dockge-server";
 import { Stack } from "./stack";
 import { envsubstYAML } from "../common/util-common";
+import { Settings } from "./settings";
 
 export const IMAGE_UPDATE_CHECK_INTERVAL_MS = 1000 * 60 * 60 * 24 * 7;
 
@@ -16,24 +17,40 @@ export interface StackImageUpdateInfo {
     }>;
 }
 
+/**
+ * Checks whether stack images have newer versions available on their registries.
+ */
 class CheckImageUpdates {
     private lastCheckTime = 0;
     private checking = false;
     private results: Map<string, StackImageUpdateInfo> = new Map();
 
-    getResults(): Map<string, StackImageUpdateInfo> {
+    /**
+     * @returns Cached image update results keyed by stack name
+     */
+    getResults() : Map<string, StackImageUpdateInfo> {
         return this.results;
     }
 
-    getLastCheckTime(): number {
+    /**
+     * @returns Timestamp of the last completed check
+     */
+    getLastCheckTime() : number {
         return this.lastCheckTime;
     }
 
-    isChecking(): boolean {
+    /**
+     * @returns Whether a check is currently in progress
+     */
+    isChecking() : boolean {
         return this.checking;
     }
 
-    shouldCheck(force = false): boolean {
+    /**
+     * @param force Skip the weekly cache and run a new check
+     * @returns Whether a new check should run
+     */
+    shouldCheck(force = false) : boolean {
         if (force) {
             return true;
         }
@@ -43,11 +60,27 @@ class CheckImageUpdates {
         return Date.now() - this.lastCheckTime >= IMAGE_UPDATE_CHECK_INTERVAL_MS;
     }
 
-    invalidateStack(stackName: string) {
+    /**
+     * @param stackName Stack to remove from the cache
+     */
+    invalidateStack(stackName : string) {
         this.results.delete(stackName);
     }
 
-    async check(server: DockgeServer, force = false): Promise<Map<string, StackImageUpdateInfo>> {
+    /**
+     * Check all managed stacks for image updates.
+     * @param server Dockge server instance
+     * @param force Skip the weekly cache and run a new check
+     * @returns Cached or freshly computed results keyed by stack name
+     */
+    async check(server : DockgeServer, force = false) : Promise<Map<string, StackImageUpdateInfo>> {
+        if (await Settings.get("checkImageUpdates") === false) {
+            // Clear cached results so the UI stops showing updateable stacks
+            this.results = new Map();
+            this.lastCheckTime = 0;
+            return this.results;
+        }
+
         if (this.checking) {
             return this.results;
         }
@@ -90,7 +123,11 @@ class CheckImageUpdates {
         return this.results;
     }
 
-    async checkStack(stack: Stack): Promise<StackImageUpdateInfo> {
+    /**
+     * Check whether any service image in a stack has an update available.
+     * @param stack Stack to inspect
+     */
+    async checkStack(stack : Stack) : Promise<StackImageUpdateInfo> {
         const images = this.getStackImages(stack);
         const imageResults: StackImageUpdateInfo["images"] = [];
         let updateable = false;
@@ -113,7 +150,11 @@ class CheckImageUpdates {
         };
     }
 
-    getStackImages(stack: Stack): string[] {
+    /**
+     * Extract unique image references from a stack compose file.
+     * @param stack Stack to inspect
+     */
+    getStackImages(stack : Stack) : string[] {
         const env = dotenv.parse(stack.composeENV);
         const content = envsubstYAML(stack.composeYAML, env);
         const doc = yaml.parse(content);
@@ -130,7 +171,11 @@ class CheckImageUpdates {
         return [ ...new Set(images) ];
     }
 
-    async hasImageUpdate(image: string): Promise<boolean> {
+    /**
+     * Compare local and remote digests for a single image reference.
+     * @param image Image reference from compose YAML
+     */
+    async hasImageUpdate(image : string) : Promise<boolean> {
         const localDigest = await this.getLocalDigest(image);
         const remoteDigest = await this.getRemoteDigest(image);
 
@@ -141,11 +186,17 @@ class CheckImageUpdates {
         return this.normalizeDigest(localDigest) !== this.normalizeDigest(remoteDigest);
     }
 
-    normalizeDigest(digest: string): string {
+    /**
+     * @param digest Docker image or manifest digest
+     */
+    normalizeDigest(digest : string) : string {
         return digest.replace(/^sha256:/, "");
     }
 
-    async getLocalDigest(image: string): Promise<string | null> {
+    /**
+     * @param image Image reference from compose YAML
+     */
+    async getLocalDigest(image : string) : Promise<string | null> {
         try {
             const res = await childProcessAsync.spawn("docker", [
                 "image", "inspect", "--format", "{{json .RepoDigests}}", image,
@@ -179,7 +230,10 @@ class CheckImageUpdates {
         }
     }
 
-    async getRemoteDigest(image: string): Promise<string | null> {
+    /**
+     * @param image Image reference from compose YAML
+     */
+    async getRemoteDigest(image : string) : Promise<string | null> {
         try {
             const res = await childProcessAsync.spawn("docker", [
                 "buildx", "imagetools", "inspect", image, "--format", "{{json .}}",

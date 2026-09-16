@@ -325,12 +325,41 @@ export default defineComponent({
             this.getSocket().emit("agent", endpoint, eventName, ...args);
         },
 
+        /**
+         * @param stack Stack object from the stack list
+         * @returns Whether the stack has image updates available
+         */
         isStackUpdateable(stack : { name: string, endpoint?: string }) {
             const endpoint = stack.endpoint || "";
             const info = this.imageUpdateList[endpoint]?.[stack.name];
             return info?.updateable === true;
         },
 
+        /**
+         * @param stack Stack object from the stack list
+         * @param image Image reference from compose YAML
+         * @returns Whether this image has an update available
+         */
+        isImageUpdateable(stack : { name: string, endpoint?: string }, image : string) {
+            if (!stack?.name || !image) {
+                return false;
+            }
+
+            const endpoint = stack.endpoint || "";
+            const info = this.imageUpdateList[endpoint]?.[stack.name];
+            if (!info?.images) {
+                return false;
+            }
+
+            return info.images.some((item : { image: string, hasUpdate: boolean }) =>
+                item.image === image && item.hasUpdate === true
+            );
+        },
+
+        /**
+         * Request image update checks from the local instance and all agents.
+         * @param force Skip the weekly cache and run a new check
+         */
         checkImageUpdates(force = false) {
             this.emitAgent("", "checkImageUpdates", force, () => {});
 

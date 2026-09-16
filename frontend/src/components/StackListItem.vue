@@ -3,7 +3,7 @@
         <Uptime :stack="stack" :fixed-width="true" class="me-2" />
         <div class="title">
             <span>{{ stackName }}</span>
-            <font-awesome-icon v-if="isUpdateable" icon="arrows-rotate" class="update-icon ms-1" title="Update available" />
+            <font-awesome-icon v-if="isUpdateable" icon="arrows-rotate" class="update-icon ms-1" :title="$t('imageUpdateAvailable')" />
         </div>
     </router-link>
 </template>

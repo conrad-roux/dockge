@@ -107,7 +107,7 @@ export class DockerSocketHandler extends AgentSocketHandler {
         });
 
         // checkImageUpdates
-        agentSocket.on("checkImageUpdates", async (force: unknown, callback) => {
+        agentSocket.on("checkImageUpdates", async (force : unknown, callback) => {
             try {
                 checkLogin(socket);
                 await checkImageUpdates.check(server, force === true);
