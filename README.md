@@ -6,17 +6,41 @@
 
 A fancy, easy-to-use and reactive self-hosted docker compose.yaml stack-oriented manager.
 
+> **This is a fork** of the original [louislam/dockge](https://github.com/louislam/dockge) project.  
+> Upstream project: https://github.com/louislam/dockge  
+> This fork: https://github.com/conrad-roux/dockge
+
 [![GitHub Repo stars](https://img.shields.io/github/stars/louislam/dockge?logo=github&style=flat)](https://github.com/louislam/dockge) [![Docker Pulls](https://img.shields.io/docker/pulls/louislam/dockge?logo=docker)](https://hub.docker.com/r/louislam/dockge/tags) [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/louislam/dockge/latest?label=docker%20image%20ver.)](https://hub.docker.com/r/louislam/dockge/tags) [![GitHub last commit (branch)](https://img.shields.io/github/last-commit/louislam/dockge/master?logo=github)](https://github.com/louislam/dockge/commits/master/)
 
 <img src="https://github.com/louislam/dockge/assets/1336778/26a583e1-ecb1-4a8d-aedf-76157d714ad7" width="900" alt="" />
 
 View Video: https://youtu.be/AWAlOQeNpgU?t=48
 
+## Changes in this fork
+
+This fork adds **container image update detection**, so you can see which stacks and containers have newer image digests available without pulling them first.
+
+### Image update detection
+
+- Compares the **local digest** of each compose image with the **registry digest** for the same tag (not a version-number scan across tags)
+- Shows an **updateable** count on the Home screen (alongside active / exited / inactive)
+- Highlights updateable stacks in the sidebar list
+- Highlights individual containers on the stack/compose page when that service’s image has an update
+- Checks **weekly**, or when you open Home / a stack page (manual trigger via navigation)
+- Can be turned on or off under **Settings → General → Check for container image updates**
+
+Pinned tags (for example `nginx:1.27.5`) only show as updateable when that **exact tag** was republished with a different digest. Floating tags like `latest` will update more often when the tag moves.
+
+### Other fixes included in this fork
+
+- After restarting a single service, the stack list is refreshed so the UI does not keep stale status
+
 ## ⭐ Features
 
 - 🧑‍💼 Manage your `compose.yaml` files
   - Create/Edit/Start/Stop/Restart/Delete
   - Update Docker Images
+  - (Fork) Detect available image updates and highlight updateable stacks/containers
 - ⌨️ Interactive Editor for `compose.yaml`
 - 🦦 Interactive Web Terminal
 - 🕷️ (1.4.0 🆕) Multiple agents support - You can manage multiple stacks from different Docker hosts in one single interface
@@ -156,11 +180,12 @@ If you love this project, please consider giving it a ⭐.
 
 ## 🗣️ Community and Contribution
 
-### Bug Report
-https://github.com/louislam/dockge/issues
+### Bug Report (this fork)
+https://github.com/conrad-roux/dockge/issues
 
-### Ask for Help / Discussions
-https://github.com/louislam/dockge/discussions
+### Upstream project
+- Bug reports / discussions for original Dockge: https://github.com/louislam/dockge
+- Upstream discussions: https://github.com/louislam/dockge/discussions
 
 ### Translation
 If you want to translate Dockge into your language, please read [Translation Guide](https://github.com/louislam/dockge/blob/master/frontend/src/lang/README.md)
@@ -168,6 +193,8 @@ If you want to translate Dockge into your language, please read [Translation Gui
 ### Create a Pull Request
 
 Be sure to read the [guide](https://github.com/louislam/dockge/blob/master/CONTRIBUTING.md), as we don't accept all types of pull requests and don't want to waste your time.
+
+For changes specific to this fork, open a PR against https://github.com/conrad-roux/dockge.
 
 ## FAQ
 
@@ -201,6 +228,10 @@ If you still need to manage something like docker networks, single containers, t
 #### Can I install both Dockge and Portainer?
 
 Yes, you can.
+
+#### Does image update detection mean a newer version tag is available?
+
+No. This fork compares digests for the **same image reference** in your compose file (for example `nginx:1.27.5` vs the registry’s current digest for `nginx:1.27.5`). It does not search for a higher version number such as `1.28`.
 
 ## Others
 
