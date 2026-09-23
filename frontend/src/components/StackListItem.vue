@@ -1,8 +1,9 @@
 <template>
-    <router-link :to="url" :class="{ 'dim' : !stack.isManagedByDockge }" class="item">
+    <router-link :to="url" :class="{ 'dim' : !stack.isManagedByDockge, 'updateable': isUpdateable }" class="item">
         <Uptime :stack="stack" :fixed-width="true" class="me-2" />
         <div class="title">
             <span>{{ stackName }}</span>
+            <font-awesome-icon v-if="isUpdateable" icon="arrows-rotate" class="update-icon ms-1" :title="$t('imageUpdateAvailable')" />
         </div>
     </router-link>
 </template>
@@ -69,7 +70,10 @@ export default {
         },
         stackName() {
             return this.stack.name;
-        }
+        },
+        isUpdateable() {
+            return this.$root.isStackUpdateable(this.stack);
+        },
     },
     watch: {
         isSelectMode() {
@@ -175,6 +179,20 @@ export default {
 
 .dim {
     opacity: 0.5;
+}
+
+.updateable {
+    border-left: 3px solid $warning;
+    background-color: rgba($warning, 0.08);
+
+    &:hover {
+        background-color: rgba($warning, 0.15);
+    }
+}
+
+.update-icon {
+    color: $warning;
+    font-size: 12px;
 }
 
 </style>

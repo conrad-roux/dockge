@@ -16,6 +16,7 @@ import { MainSocketHandler } from "./socket-handlers/main-socket-handler";
 import { SocketHandler } from "./socket-handler";
 import { Settings } from "./settings";
 import checkVersion from "./check-version";
+import checkImageUpdates from "./check-image-updates";
 import dayjs from "dayjs";
 import { R } from "redbean-node";
 import { genSecret, isDev, LooseObject } from "../common/util-common";
@@ -611,6 +612,35 @@ export class DockgeServer {
                 dockgeSocket.emitAgent("stackList", {
                     ok: true,
                     stackList: Object.fromEntries(map),
+                });
+            }
+        }
+    }
+
+    /**
+     * Send image update status to all connected sockets
+     */
+    sendImageUpdateList() {
+        const socketList = this.io.sockets.sockets.values();
+        const results = checkImageUpdates.getResults();
+        const lastChecked = checkImageUpdates.getLastCheckTime();
+        const checking = checkImageUpdates.isChecking();
+
+        const imageUpdateList: Record<string, object> = {};
+        for (const [ stackName, info ] of results) {
+            imageUpdateList[stackName] = info;
+        }
+
+        for (const socket of socketList) {
+            const dockgeSocket = socket as DockgeSocket;
+
+            if (dockgeSocket.userID) {
+                log.debug("server", "Send image update list to user: " + dockgeSocket.id + " (" + dockgeSocket.endpoint + ")");
+                dockgeSocket.emitAgent("imageUpdateList", {
+                    ok: true,
+                    imageUpdateList,
+                    lastChecked,
+                    checking,
                 });
             }
         }

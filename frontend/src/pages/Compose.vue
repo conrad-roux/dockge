@@ -511,6 +511,7 @@ export default {
 
         this.requestServiceStatus();
         this.requestDockerStats();
+        this.$root.checkImageUpdates(false);
     },
     unmounted() {
 

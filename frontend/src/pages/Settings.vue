@@ -123,6 +123,9 @@ export default {
                 if (this.settings.checkUpdate === undefined) {
                     this.settings.checkUpdate = true;
                 }
+                if (this.settings.checkImageUpdates === undefined) {
+                    this.settings.checkImageUpdates = true;
+                }
                 this.settingsLoaded = true;
             });
         },

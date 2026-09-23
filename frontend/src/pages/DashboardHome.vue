@@ -23,6 +23,10 @@
                                 <h3>{{ $t("inactive") }}</h3>
                                 <span class="num inactive">{{ inactiveNum }}</span>
                             </div>
+                            <div class="col">
+                                <h3>{{ $t("updateable") }}</h3>
+                                <span class="num updateable">{{ updateableNum }}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -160,6 +164,17 @@ export default {
         exitedNum() {
             return this.getStatusNum("exited");
         },
+        updateableNum() {
+            let num = 0;
+
+            for (const stackName in this.$root.completeStackList) {
+                const stack = this.$root.completeStackList[stackName];
+                if (this.$root.isStackUpdateable(stack)) {
+                    num += 1;
+                }
+            }
+            return num;
+        },
     },
 
     watch: {
@@ -179,6 +194,7 @@ export default {
 
         window.addEventListener("resize", this.updatePerPage);
         this.updatePerPage();
+        this.$root.checkImageUpdates(false);
     },
 
     beforeUnmount() {
@@ -338,6 +354,10 @@ export default {
 
     &.exited {
         color: $danger;
+    }
+
+    &.updateable {
+        color: $warning;
     }
 }
 

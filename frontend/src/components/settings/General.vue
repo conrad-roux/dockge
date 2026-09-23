@@ -57,6 +57,24 @@
                 <div class="form-text"></div>
             </div>
 
+            <!-- Check for container image updates -->
+            <div class="mb-4">
+                <div class="form-check">
+                    <input
+                        id="checkImageUpdates"
+                        v-model="settings.checkImageUpdates"
+                        class="form-check-input"
+                        type="checkbox"
+                    />
+                    <label class="form-check-label" for="checkImageUpdates">
+                        {{ $t("Check for image updates") }}
+                    </label>
+                </div>
+                <div class="form-text">
+                    {{ $t("checkImageUpdatesDescription") }}
+                </div>
+            </div>
+
             <!-- Save Button -->
             <div>
                 <button class="btn btn-primary" type="submit">
@@ -102,7 +120,10 @@ export default {
         /** Save the settings */
         saveGeneral() {
             localStorage.timezone = this.$root.userTimezone;
-            this.saveSettings();
+            this.saveSettings(() => {
+                // Refresh image update status so the UI matches the new setting
+                this.$root.checkImageUpdates(true);
+            });
         },
         /** Get the base URL of the application */
         autoGetPrimaryHostname() {

@@ -1,13 +1,17 @@
 <template>
-    <div class="shadow-box big-padding mb-3 container">
+    <div class="shadow-box big-padding mb-3 container" :class="{ updateable: isUpdateable }">
         <div class="row">
             <div class="col-5">
-                <h4>{{ name }}</h4>
+                <h4>
+                    {{ name }}
+                    <font-awesome-icon v-if="isUpdateable" icon="arrows-rotate" class="update-icon ms-1" :title="$t('imageUpdateAvailable')" />
+                </h4>
                 <div class="image mb-2">
                     <span class="me-1">{{ imageName }}:</span><span class="tag">{{ imageTag }}</span>
                 </div>
                 <div v-if="!isEditMode">
                     <span class="badge me-1" :class="bgStyle">{{ status }}</span>
+                    <span v-if="isUpdateable" class="badge me-1 bg-warning text-dark">{{ $t("updateable") }}</span>
 
                     <a v-for="port in (ports ?? envsubstService.ports)" :key="port" :href="parsePort(port).url" target="_blank">
                         <span class="badge me-1 bg-secondary">{{ parsePort(port).display }}</span>
@@ -350,7 +354,12 @@ export default defineComponent({
                 return "N/A";
             }
             return this.serviceStatus[0].status;
-        }
+        },
+
+        isUpdateable() {
+            const image = this.envsubstService.image || this.service.image;
+            return this.$root.isImageUpdateable(this.stack, image);
+        },
     },
     mounted() {
         if (this.first) {
@@ -387,6 +396,16 @@ export default defineComponent({
 @import "../styles/vars";
 
 .container {
+    &.updateable {
+        border-left: 3px solid $warning;
+        background-color: rgba($warning, 0.08);
+    }
+
+    .update-icon {
+        color: $warning;
+        font-size: 0.75em;
+    }
+
     .image {
         font-size: 0.8rem;
         color: #6c757d;
