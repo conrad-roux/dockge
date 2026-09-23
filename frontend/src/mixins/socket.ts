@@ -137,16 +137,18 @@ export default defineComponent({
     methods: {
 
         endpointDisplayFunction(endpoint : string) {
-            for (const [ k, v ] of Object.entries(this.$data.agentList)) {
-                if (endpoint) {
-                    if (endpoint === v["endpoint"] && v["name"] !== "") {
-                        return v["name"];
-                    }
-                    if (endpoint === v["endpoint"] && v["name"] === "" ) {
-                        return endpoint;
-                    }
-                }
+            if (!endpoint) {
+                return "";
             }
+
+            // agentList is keyed by endpoint host; prefer a friendly name when set
+            const agent = this.agentList[endpoint] as { name?: string } | undefined;
+            if (agent?.name) {
+                return agent.name;
+            }
+
+            // Fall back to the endpoint host so the UI never renders empty "()"
+            return endpoint;
         },
 
         /**
